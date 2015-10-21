@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-sis"
+    version="0.2.0">
+
+  <name>SIS SDK plugin</name>
+  <author>Mike McIver</author>
+  <license>MIT License</license>
+
+  <engines>
+    <engine name="cordova" version=">=3.4.0"/>
+  </engines>
+
+  <asset src="www/sis.js" target="js/sis.js"/>
+  <js-module src="www/sis.js" name="SIS">
+    <clobbers target="sis" />
+  </js-module>
+
+  <platform name="android">
+    <config-file target="res/xml/config.xml" parent="/*">
+      <feature name="SIS">
+        <param name="android-package" value="org.spanner.plugin.sis.SIS"/>
+      </feature>
+    </config-file>
+    <framework src="com.google.android.gms:play-services-gcm:7.8.+" />
+    <source-file src="src/android/SIS.java" target-dir="src/org/spanner/plugin/sis"/>
+  </platform>
+
+  <platform name="ios">
+    <config-file target="config.xml" parent="/*">
+      <feature name="SIS">
+        <param name="ios-package" value="CDVSis"/>
+      </feature>
+    </config-file>
+    <header-file src="src/ios/CDVSis.h"/>
+    <source-file src="src/ios/CDVSis.m"/>
+  </platform>
+
+</plugin>
