@@ -13,7 +13,7 @@ module.exports = {
     listenForMapItems: function (successCallback, errorCallback) {
       cordova.exec(successCallback, errorCallback, "SIS", "listenForMapItems", []);
     },
-    getAllMapItems: function (successCallback, errorCallback) {
-      cordova.exec(successCallback, errorCallback, "SIS", "getAllMapItems", []);
+    getCompleteMapData: function (successCallback, errorCallback) {
+      cordova.exec(successCallback, errorCallback, "SIS", "getCompleteMapData", []);
     }
 };

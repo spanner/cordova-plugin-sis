@@ -55,9 +55,9 @@ NSString *mappingCallbackId;
     [self.commandDelegate sendPluginResult:pluginResult callbackId:mappingCallbackId];
 }
 
-// getAllMapItems gets... all map items, and returns them directly. Silence if none.
+// getCompleteMapData gets all map items and returns them directly. Silence if none.
 
-- (void)getAllMapItems:(CDVInvokedUrlCommand*)command
+- (void)getCompleteMapData:(CDVInvokedUrlCommand*)command
 {
     NSDictionary *mapData = [self mapContents];
     if (mapData) {

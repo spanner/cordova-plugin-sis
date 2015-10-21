@@ -17,7 +17,7 @@
 
 - (void)listenForMessages:(CDVInvokedUrlCommand *)command;
 - (void)listenForMapItems:(CDVInvokedUrlCommand *)command;
-- (void)getAllMapItems:(CDVInvokedUrlCommand *)command;
+- (void)getCompleteMapData:(CDVInvokedUrlCommand *)command;
 - (void)deleteMessageWithId:(CDVInvokedUrlCommand *)command;
 
 @end

@@ -1,49 +1,70 @@
-# Cordova Hello World Plugin
+# Cordova SIS Plugin
 
-Simple plugin that returns your string prefixed with hello.
+This is an API relay that wraps around the interface provided by the SIS SDK to make it available in javascript.
 
-Greeting a user with "Hello, world" is something that could be done in JavaScript. This plugin provides a simple example demonstrating how Cordova plugins work.
+## Status
 
-## Using
+Alpha! This is an early build that gives access only to the features we need first.
+It's a test and proof of concept that is also about to go into production, so wish it luck.
+
+## Installation
+
 Clone the plugin
 
-    $ git clone https://github.com/don/cordova-plugin-hello.git
+    $ git clone https://github.com/spanner/cordova-plugin-sis.git
 
-Create a new Cordova Project
-
-    $ cordova create hello com.example.helloapp Hello
-    
 Install the plugin
 
-    $ cd hello
-    $ cordova plugin add ../cordova-plugin-hello
+    $ cd cordova_app
+    $ cordova plugin add ../cordova-plugin-sis
     
 
-Edit `www/js/index.js` and add the following code inside `onDeviceReady`
+## Use
 
-```js
-    var success = function(message) {
-        alert(message);
-    }
+The plugin is really just a pipe. You pass through a success callback to one of its listening methods and every bit
+of new content is piped through to that callback as it comes in.
 
-    var failure = function() {
-        alert("Error calling Hello Plugin");
-    }
+All we do is top up a backbone collection (in coffeescript):
 
-    hello.greet("World", success, failure);
-```
-
-Install iOS or Android platform
-
-    cordova platform add ios
-    cordova platform add android
+    window.sis.listenForMessages @receiveMessages
     
-Run the code
+    receiveMessages: (data) =>
+      message_collection.add data
 
-    cordova run 
 
-## More Info
+## Data structure
 
-For more information on setting up Cordova see [the documentation](http://cordova.apache.org/docs/en/4.0.0/guide_cli_index.md.html#The%20Command-Line%20Interface)
+At the moment, data comes through in a somewhat simplified form more like the restful representation a web app
+would be used to. I expect we will stop doing that and just pass it through, for greater fidelity.
 
-For more info on plugins see the [Plugin Development Guide](http://cordova.apache.org/docs/en/4.0.0/guide_hybrid_plugins_index.md.html#Plugin%20Development%20Guide)
+
+## Initialization
+
+Each callback pipe has to be set up by a javascript call:
+
+### sis.listenForMessages(successCallback, errorCallback)
+
+`successCallback(message data)` will be invoked every time a message comes in.
+The `message data` argument will be an array of all unread messages.
+
+### sis.listenForMapItems(successCallback, errorCallback)
+
+`successCallback(map data)` is invoked every time a message comes in.
+The `map data` argument is the same package as would returned by getCompleteMapData.
+
+
+## SDK interface
+
+Eventually we will represent every SIS SDK call but so far you can only do this:
+
+### sis.markMessageAsRead(message_id)
+
+Marks a single message as read and therefore removes it from the notified list.
+
+### sis.deleteMessage(message_id)
+
+Deletes a message record altogether.
+
+### sis.getCompleteMapData()
+
+Immediately returns a complete package of map data, as would be 
