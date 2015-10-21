@@ -20,7 +20,6 @@ public class SIS extends CordovaPlugin {
     private CallbackContext mappingCallbackContext;
     private SISMappingSFLLibrary mappingSFL;
     private SISMessagingSFLLibrary messagingSFL;
-//    private SISCommandSFLLibrary commandSFL;
     private Gson gson = new Gson();
 
     @Override
@@ -32,20 +31,18 @@ public class SIS extends CordovaPlugin {
         messagingSFL = SISMessagingSFLLibrary.getInstance(cordova.getActivity());
         messagingSFL.registerOnSISMessagingSFLMessagesListener(mOnSISMessagingSFLMessagesListener);
 
-//        commandSFL = SISCommandSFLLibrary.getInstance(cordova.getActivity());
-//        commandSFL.registerOnSISCommandSFLListener(mOnSISMessagingSFLMessagesListener);
     }
 
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         if (action.equals("listenForMessages")) {
             messagingCallbackContext = callbackContext;
+            onNewLocationBasedMessages();
+            onNewBroadcastMessages();
             return true;
         } else if (action.equals("listenForMapItems")) {
             mappingCallbackContext = callbackContext;
-            return true;
-        } else if (action.equals("getAllMapItems")) {
-            callbackContext.success(getSISMapJson());
+            onNewMapData();
             return true;
         } else if (action.equals("markMessageAsRead")) {
             markMessageAsRead(data.get(0).toString());
@@ -87,22 +84,21 @@ public class SIS extends CordovaPlugin {
         }
     }
 
-    private JSONObject getLocationBasedMessagesJson() {
+    private JSONObject messagesJson(String jsonString) {
         JSONObject json = new JSONObject();
         try {
-            json.put("loc_messages",new JSONArray(gson.toJson(messagingSFL.getAllLocationBasedMessages())));
+            json.put("messages",new JSONArray(jsonString));
         }
         catch (JSONException e) {}
         return json;
     }
 
+    private JSONObject getLocationBasedMessagesJson() {
+        return messagesJson(gson.toJson(messagingSFL.getAllLocationBasedMessages()));
+    }
+
     private JSONObject getBroadcastMessagesJson() {
-        JSONObject json = new JSONObject();
-        try {
-            json.put("broadcast_messages",new JSONArray(gson.toJson(messagingSFL.getAllBroadcastMessages())));
-        }
-        catch (JSONException e) {}
-        return json;
+        return messagesJson(gson.toJson(messagingSFL.getAllBroadcastMessages()));
     }
 
     private OnSISMessagingSFLMessagesListener mOnSISMessagingSFLMessagesListener = new OnSISMessagingSFLMessagesListener() {
