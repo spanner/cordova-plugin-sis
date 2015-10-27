@@ -11,13 +11,17 @@
 #import "SISManager.h"
 #import "SISMessagingManager.h"
 #import "SISMappingModule.h"
+
+// Extra headers for low-level stuff we will need to gather.
 #import "SISMessageChannel.h"
+#import "SISZone.h"
 
 @interface CDVSis : CDVPlugin
 
 - (void)listenForMessages:(CDVInvokedUrlCommand *)command;
 - (void)listenForMapItems:(CDVInvokedUrlCommand *)command;
 - (void)getCompleteMapData:(CDVInvokedUrlCommand *)command;
-- (void)deleteMessageWithId:(CDVInvokedUrlCommand *)command;
+- (void)deleteMessage:(CDVInvokedUrlCommand *)command;
+- (void)markMessageAsRead:(CDVInvokedUrlCommand *)command;
 
 @end
