@@ -1,47 +1,54 @@
 package org.spanner.plugin.sis;
 
-import android.app.Activity;
+import com.google.gson.Gson;
 
 import org.apache.cordova.*;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
-import de.sissoftware.sisframework.internal.log.SISLog;
 import de.sissoftware.sisframework.sfl.mapping.OnSISMappingSFLListener;
 import de.sissoftware.sisframework.sfl.mapping.SISMappingExponentialBackoffAction;
 import de.sissoftware.sisframework.sfl.mapping.SISMappingSFLLibrary;
-import de.sissoftware.sisframework.sfl.mapping.data.SISMapItem;
 import de.sissoftware.sisframework.sfl.messaging.OnSISMessagingSFLMessagesListener;
 import de.sissoftware.sisframework.sfl.messaging.SISMessagingSFLLibrary;
-import de.sissoftware.sisframework.sfl.messaging.data.SISBroadcastMessage;
-import de.sissoftware.sisframework.sfl.messaging.data.SISLocationBasedMessage;
 
 public class SIS extends CordovaPlugin {
-    private CallbackContext messagesCallbackContext;
+    private CallbackContext messagingCallbackContext;
     private CallbackContext mappingCallbackContext;
-
+    private SISMappingSFLLibrary mappingSFL;
+    private SISMessagingSFLLibrary messagingSFL;
+    private Gson gson = new Gson();
 
     @Override
     protected void pluginInitialize() {
         super.pluginInitialize();
-        SISMappingSFLLibrary.getInstance(cordova.getActivity());
+        mappingSFL = SISMappingSFLLibrary.getInstance(cordova.getActivity());
+        mappingSFL.registerOnSISMappingSFLListener(mOnSISMappingSFLListener);
+
+        messagingSFL = SISMessagingSFLLibrary.getInstance(cordova.getActivity());
+        messagingSFL.registerOnSISMessagingSFLMessagesListener(mOnSISMessagingSFLMessagesListener);
+
     }
 
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         if (action.equals("listenForMessages")) {
-            messagesCallbackContext = callbackContext;
-            SISMessagingSFLLibrary.getInstance(cordova.getActivity()).registerOnSISMessagingSFLMessagesListener(mOnSISMessagingSFLMessagesListener);
+            messagingCallbackContext = callbackContext;
+            onNewLocationBasedMessages();
+            onNewBroadcastMessages();
             return true;
         } else if (action.equals("listenForMapItems")) {
             mappingCallbackContext = callbackContext;
-            SISMappingSFLLibrary.getInstance(cordova.getActivity()).registerOnSISMappingSFLListener(mOnSISMappingSFLListener);
+            onNewMapData();
             return true;
-        } else if (action.equals("getAllMapItems")) {
-            List<SISMapItem> map_items = SISMappingSFLLibrary.getInstance(cordova.getActivity()).getCompleteMapData();
-            callbackContext.success("get map items");
+        } else if (action.equals("markMessageAsRead")) {
+            markMessageAsRead(data.get(0).toString());
+            return true;
+        } else if (action.equals("deleteMessage")) {
+            deleteMessage(data.get(0).toString());
             return true;
         } else {
             return false;
@@ -53,37 +60,57 @@ public class SIS extends CordovaPlugin {
         cbContext.sendPluginResult(result);
     }
 
-
     // messaging ->
 
-    private void getLatestLocationBasedMessage() {
-        List<SISLocationBasedMessage> messages = SISMessagingSFLLibrary.getInstance(cordova.getActivity()).getAllLocationBasedMessages();
-        SISLocationBasedMessage message = messages.get(messages.size() - 1);
-        SISLog.d("Mike: getLocationBasedMessages()", message.getTitle().getText("en")+": "+message.getText().getText("en"));
-
-        PluginResult result = new PluginResult(PluginResult.Status.OK, message.getTitle().getText("en")+": "+message.getText().getText("en"));
-        callBackAndKeepOpen(messagesCallbackContext, result);
+    private void markMessageAsRead(String id) {
+        messagingSFL.markMessageAsRead(messagingSFL.getBroadcastMessage(id));
     }
 
-    private void getLatestBroadcastMessage() {
-        List<SISBroadcastMessage> messages = SISMessagingSFLLibrary.getInstance(cordova.getActivity()).getAllBroadcastMessages();
-        SISBroadcastMessage message = messages.get(messages.size() - 1);
-        SISLog.d("Mike: getBroadcastMessages()", message.getTitle().getText("en") + ": " + message.getText().getText("en"));
+    private void deleteMessage(String id) {
+        messagingSFL.removeMessage(messagingSFL.getBroadcastMessage(id));
+    }
 
-        PluginResult result = new PluginResult(PluginResult.Status.OK, message.getTitle().getText("en")+": "+message.getText().getText("en"));
-        callBackAndKeepOpen(messagesCallbackContext, result);
+    private void onNewLocationBasedMessages() {
+        if (messagingCallbackContext != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, getLocationBasedMessagesJson());
+            callBackAndKeepOpen(messagingCallbackContext, result);
+        }
+    }
+
+    private void onNewBroadcastMessages() {
+        if (messagingCallbackContext != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, getBroadcastMessagesJson());
+            callBackAndKeepOpen(messagingCallbackContext, result);
+        }
+    }
+
+    private JSONObject messagesJson(String jsonString) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("messages",new JSONArray(jsonString));
+        }
+        catch (JSONException e) {}
+        return json;
+    }
+
+    private JSONObject getLocationBasedMessagesJson() {
+        return messagesJson(gson.toJson(messagingSFL.getAllLocationBasedMessages()));
+    }
+
+    private JSONObject getBroadcastMessagesJson() {
+        return messagesJson(gson.toJson(messagingSFL.getAllBroadcastMessages()));
     }
 
     private OnSISMessagingSFLMessagesListener mOnSISMessagingSFLMessagesListener = new OnSISMessagingSFLMessagesListener() {
 
         @Override
         public void onSISLocationBasedMessagesAvailable() {
-            getLatestLocationBasedMessage();
+            onNewLocationBasedMessages();
         }
 
         @Override
         public void onSISBroadcastMessagesAvailable() {
-            getLatestBroadcastMessage();
+            onNewBroadcastMessages();
         }
 
         @Override
@@ -93,30 +120,30 @@ public class SIS extends CordovaPlugin {
 
     // mapping ->
 
-    private void getSISMapData() {
-        List<SISMapItem> map_items = SISMappingSFLLibrary.getInstance(cordova.getActivity()).getCompleteMapData();
-        SISMapItem map_item = map_items.get(map_items.size() - 1);
-        PluginResult result = new PluginResult(PluginResult.Status.OK, "getSISMapData"+map_item.getTitle());
-        callBackAndKeepOpen(mappingCallbackContext, result);
+    private void onNewMapData() {
+        if (mappingCallbackContext != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, getSISMapJson());
+            callBackAndKeepOpen(mappingCallbackContext, result);
+        }
     }
 
-    private void getSISDynamicPoiData() {
-        PluginResult result = new PluginResult(PluginResult.Status.OK, "getSISDynamicPoiData");
-        callBackAndKeepOpen(mappingCallbackContext, result);
+    private JSONObject getSISMapJson() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("pois",new JSONArray(gson.toJson(mappingSFL.getPois())));
+            json.put("routes",new JSONArray(gson.toJson(mappingSFL.getRoutes())));
+            json.put("zones",new JSONArray(gson.toJson(mappingSFL.getZones())));
+        }
+        catch (JSONException e) {}
+        return json;
     }
 
     private OnSISMappingSFLListener mOnSISMappingSFLListener = new OnSISMappingSFLListener() {
         @Override
-        public void onSISNewMapData() {
-            SISLog.d("____________Mike", "new map data");
-            getSISMapData();
-        }
+        public void onSISNewMapData() { onNewMapData(); }
 
         @Override
-        public void onSISNewDynamicPoiData() {
-            getSISDynamicPoiData();
-        }
-
+        public void onSISNewDynamicPoiData() {}
         @Override
         public void onSISMapStatisticsUploadSuccess() {}
         @Override
@@ -130,5 +157,4 @@ public class SIS extends CordovaPlugin {
         @Override
         public void onSISMapExponentialBackoffAction(SISMappingExponentialBackoffAction action) {}
     };
-
 }
