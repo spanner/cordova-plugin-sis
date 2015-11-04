@@ -63,11 +63,19 @@ public class SIS extends CordovaPlugin {
     // messaging ->
 
     private void markMessageAsRead(String id) {
-        messagingSFL.markMessageAsRead(messagingSFL.getBroadcastMessage(id));
+        if (messagingSFL.getBroadcastMessage(id) != null) {
+            messagingSFL.markMessageAsRead(messagingSFL.getBroadcastMessage(id));
+        } else if (messagingSFL.getLocationBasedMessage(id) != null) {
+            messagingSFL.markMessageAsRead(messagingSFL.getLocationBasedMessage(id));
+        }
     }
 
     private void deleteMessage(String id) {
-        messagingSFL.removeMessage(messagingSFL.getBroadcastMessage(id));
+        if (messagingSFL.getBroadcastMessage(id) != null) {
+            messagingSFL.removeMessage(messagingSFL.getBroadcastMessage(id));
+        } else if (messagingSFL.getLocationBasedMessage(id) != null) {
+            messagingSFL.removeMessage(messagingSFL.getLocationBasedMessage(id));
+        }
     }
 
     private void onNewLocationBasedMessages() {
@@ -84,20 +92,20 @@ public class SIS extends CordovaPlugin {
         }
     }
 
-    private JSONObject messagesJson(String jsonString) {
-        JSONObject json = new JSONObject();
+    private JSONArray messagesJson(String jsonString) {
+        JSONArray json = new JSONArray();
         try {
-            json.put("messages",new JSONArray(jsonString));
+            json = new JSONArray(jsonString);
         }
         catch (JSONException e) {}
         return json;
     }
 
-    private JSONObject getLocationBasedMessagesJson() {
+    private JSONArray getLocationBasedMessagesJson() {
         return messagesJson(gson.toJson(messagingSFL.getAllUnreadLocationBasedMessages()));
     }
 
-    private JSONObject getBroadcastMessagesJson() {
+    private JSONArray getBroadcastMessagesJson() {
         return messagesJson(gson.toJson(messagingSFL.getAllUnreadBroadcastMessages()));
     }
 
