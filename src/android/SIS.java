@@ -94,11 +94,11 @@ public class SIS extends CordovaPlugin {
     }
 
     private JSONObject getLocationBasedMessagesJson() {
-        return messagesJson(gson.toJson(messagingSFL.getAllLocationBasedMessages()));
+        return messagesJson(gson.toJson(messagingSFL.getAllUnreadLocationBasedMessages()));
     }
 
     private JSONObject getBroadcastMessagesJson() {
-        return messagesJson(gson.toJson(messagingSFL.getAllBroadcastMessages()));
+        return messagesJson(gson.toJson(messagingSFL.getAllUnreadBroadcastMessages()));
     }
 
     private OnSISMessagingSFLMessagesListener mOnSISMessagingSFLMessagesListener = new OnSISMessagingSFLMessagesListener() {
