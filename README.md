@@ -26,10 +26,10 @@ of new content is piped through to that callback as it comes in.
 
 For example, all we have done so far is to top up a backbone collection. Coffeescript:
 
-    window.sis.listenForMessages @receiveMessages
+    window.sis.listenForMessages @receiveMessages, @reportFailure
     
     receiveMessages: (data) =>
-      message_collection.add data
+      @message_collection.add data
 
 The `data` argument is an array of message objects with id, so the collection will dedupe for us.
 It would also update if relevant, but not in this example because messages don't change once sent.
@@ -38,12 +38,47 @@ It would also update if relevant, but not in this example because messages don't
 ## Data structure
 
 At the moment, data comes through in a somewhat simplified form more like the restful representation a web app
-would be used to. I expect we will stop doing that and just pass it through, for greater fidelity.
+would be used to. For messages:
+
+    [{
+       id: integer as string,
+       date: iso date string,
+       title: string,
+       text: string,
+       channel: name as string
+    }]
+ 
+For map content:
+
+    {
+      categories: [{
+        id: integer
+        name: string
+      }],
+      pois: [{
+        icon: url string
+        title: string
+        description: string
+      }],
+      routes: [{
+        color: rgba(r,g,b,a) string
+        paths: array of encoded path strings
+        title: string
+        description: string
+      }],
+      zones: [{
+        color: rgba(r,g,b,a) string
+        paths: array of encoded path strings
+        title: string
+        description: string
+      }]
+    }
+
 
 
 ## Initialization
 
-Each callback pipe has to be set up by a javascript call:
+Each callback pipe is set up by a javascript call:
 
     sis.listenForMessages(successCallback, errorCallback)
 
